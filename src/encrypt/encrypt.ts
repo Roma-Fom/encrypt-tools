@@ -8,7 +8,7 @@ import { EncryptError } from "./encrypt-error";
 
 export function hash(
   input: string,
-  algorithm: "sha256" | "sha512" = "sha256"
+  algorithm: "sha256" | "sha512" = "sha256",
 ): string {
   try {
     const hash = createHash(algorithm);
@@ -32,7 +32,7 @@ export function encrypt({
     const cipher = createCipheriv(
       "aes-256-cbc",
       Buffer.from(secretKey, "hex"),
-      iv
+      iv,
     );
     const encrypted = Buffer.concat([
       cipher.update(plaintext, "utf8"),
@@ -60,7 +60,7 @@ export function decrypt({
     const decipher = createDecipheriv(
       "aes-256-cbc",
       Buffer.from(secretKey, "hex"),
-      Buffer.from(iv, "hex")
+      Buffer.from(iv, "hex"),
     );
     const decrypted = Buffer.concat([
       decipher.update(Buffer.from(ciphertext, "hex")),
