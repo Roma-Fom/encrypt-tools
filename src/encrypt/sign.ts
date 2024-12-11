@@ -19,7 +19,7 @@ function signAsymmetric({ data, privateKey }: SignAsymmetric): string {
     throw new EncryptError(
       e.message,
       "Signing failed",
-      "SIGN_ASYMMETRIC_ERROR"
+      "SIGN_ASYMMETRIC_ERROR",
     );
   }
 }
@@ -37,7 +37,7 @@ function signSymmetric({
     throw new EncryptError(
       e.message,
       "Symmetric signing failed",
-      "SIGN_SYMMETRIC_ERROR"
+      "SIGN_SYMMETRIC_ERROR",
     );
   }
 }
@@ -94,7 +94,11 @@ export function verify({
 }: Verify) {
   if (publicKey) {
     return verifyAsymmetricSignature({ data, signature, publicKey });
-  } else if (secret) {
-    return verifySymmetric({ data, secret, algorithm, signature });
   }
+  return verifySymmetric({
+    data,
+    secret: secret!,
+    algorithm: algorithm!,
+    signature,
+  });
 }
