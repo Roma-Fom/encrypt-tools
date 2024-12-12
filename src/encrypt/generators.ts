@@ -30,7 +30,6 @@ export function generateRSAKeyPair(): {
         format: "pem",
       },
     });
-
     return { privateKey, publicKey };
   } catch (e: any) {
     throw new EncryptError(

@@ -1,13 +1,16 @@
 {
   "name": "encrypt-tools",
-  "version": "1.0.0",
-  "main": "./dist/index.js",
+  "version": "1.0.2",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "rm -rf ./dist && tsc",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "Roma-Fom",

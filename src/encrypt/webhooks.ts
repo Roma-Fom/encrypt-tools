@@ -7,7 +7,7 @@ export function signWebhook<
   U extends object | undefined,
 >(
   data: T,
-  options: { id?: string; secret: string; extraParams?: U },
+  options: { id?: string; secret: string; extraParams?: U }
 ): {
   payload: U extends object
     ? { id: string; timestamp: number; data: T } & U
@@ -20,7 +20,7 @@ export function signWebhook<
     throw new EncryptError(
       "Secret is required",
       "Invalid secret",
-      "INVALID_SECRET",
+      "INVALID_SECRET"
     );
 
   const payload = {
