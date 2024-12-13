@@ -67,10 +67,60 @@ describe("Sign and Verify", () => {
   });
 
   describe("Error Handling", () => {
-    it("should fail sign", () => {
-      expect(() => sign({ data: "data", privateKey: "123" })).toThrow(
-        EncryptError
-      );
+    it("should handle missing parameters in symmetric signing", () => {
+      expect(() =>
+        sign({
+          data: "test",
+          // missing secret and algorithm
+        } as any)
+      ).toThrow(EncryptError);
+    });
+
+    it("should handle invalid algorithm in symmetric signing", () => {
+      const secretKey = generateSecretKey();
+      expect(() =>
+        sign({
+          data: "test",
+          secret: secretKey,
+          algorithm: "invalid" as any,
+        })
+      ).toThrow(EncryptError);
+    });
+
+    it("should handle crypto errors in asymmetric signing", () => {
+      // Mock crypto.sign to throw an error
+      const originalSign = require("crypto").sign;
+      require("crypto").sign = () => {
+        throw new Error("Mocked signing error");
+      };
+
+      expect(() =>
+        sign({
+          data: "test",
+          privateKey: "invalid-key",
+        })
+      ).toThrow(EncryptError);
+
+      // Restore original function
+      require("crypto").sign = originalSign;
+    });
+
+    it("should handle crypto errors in asymmetric verification", () => {
+      // Mock crypto.verify to throw an error
+      const originalVerify = require("crypto").verify;
+      require("crypto").verify = () => {
+        throw new Error("Mocked verify error");
+      };
+
+      const result = verify({
+        data: "test",
+        publicKey: "invalid-key",
+        signature: "invalid-signature",
+      });
+      expect(result).toBe(false);
+
+      // Restore original function
+      require("crypto").verify = originalVerify;
     });
   });
 

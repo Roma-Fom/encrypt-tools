@@ -79,4 +79,19 @@ describe("Generator Tests", () => {
       expect(key).toMatch(/^test_[A-Za-z0-9]{5,}$/);
     });
   });
+
+  describe("RSA Key Pair Generation Error Handling", () => {
+    it("should handle RSA key generation errors", () => {
+      // Mock crypto.generateKeyPairSync to throw an error
+      const originalGenerateKeyPair = require("crypto").generateKeyPairSync;
+      require("crypto").generateKeyPairSync = () => {
+        throw new Error("Mocked RSA generation error");
+      };
+
+      expect(() => generateRSAKeyPair()).toThrow(EncryptError);
+
+      // Restore original function
+      require("crypto").generateKeyPairSync = originalGenerateKeyPair;
+    });
+  });
 });
