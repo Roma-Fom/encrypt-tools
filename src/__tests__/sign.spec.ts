@@ -73,4 +73,63 @@ describe("Sign and Verify", () => {
       );
     });
   });
+
+  describe("Edge Cases", () => {
+    it("should handle empty data", () => {
+      const secretKey = generateSecretKey();
+      const signature = sign({
+        data: "",
+        secret: secretKey,
+        algorithm: "sha256",
+      });
+
+      const isValid = verify({
+        data: "",
+        secret: secretKey,
+        signature,
+        algorithm: "sha256",
+      });
+
+      expect(isValid).toBe(true);
+    });
+
+    it("should fail verification with mismatched algorithms", () => {
+      const secretKey = generateSecretKey();
+      const data = "test data";
+      const signature = sign({
+        data,
+        secret: secretKey,
+        algorithm: "sha256",
+      });
+
+      const isValid = verify({
+        data,
+        secret: secretKey,
+        signature,
+        algorithm: "sha512",
+      });
+
+      expect(isValid).toBe(false);
+    });
+
+    it("should handle large data payloads", () => {
+      const secretKey = generateSecretKey();
+      const largeData = "x".repeat(10000);
+
+      const signature = sign({
+        data: largeData,
+        secret: secretKey,
+        algorithm: "sha256",
+      });
+
+      expect(() =>
+        verify({
+          data: largeData,
+          secret: secretKey,
+          signature,
+          algorithm: "sha256",
+        })
+      ).not.toThrow();
+    });
+  });
 });

@@ -3,6 +3,13 @@ import { nanoid } from "nanoid";
 import { EncryptError } from "./encrypt-error";
 
 export function generateSecretKey(length: 16 | 32 = 32): string {
+  if (length !== 16 && length !== 32) {
+    throw new EncryptError(
+      "Invalid key length",
+      "Key length must be 16 or 32",
+      "INVALID_KEY_LENGTH"
+    );
+  }
   return randomBytes(length).toString("hex");
 }
 

@@ -6,6 +6,7 @@ export const EncryptErrorType = {
   SIGN_ASYMMETRIC_ERROR: "SIGN_ASYMMETRIC_ERROR",
   SIGN_SYMMETRIC_ERROR: "SIGN_SYMMETRIC_ERROR",
   INVALID_SECRET: "INVALID_SECRET",
+  INVALID_KEY_LENGTH: "INVALID_KEY_LENGTH",
 } as const;
 export type EncryptErrorType =
   (typeof EncryptErrorType)[keyof typeof EncryptErrorType];
