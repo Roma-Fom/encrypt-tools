@@ -9,6 +9,6 @@
     "strictNullChecks": true,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*"], 
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
 }

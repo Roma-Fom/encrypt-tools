@@ -5,3 +5,5 @@ tsconfig.json
 .idea
 .vscode
 jest.config.js
+coverage
+src/__tests__
