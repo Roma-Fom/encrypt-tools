@@ -28,19 +28,21 @@ export function signWebhook<
     timestamp: Date.now(),
     ...(extraParams || {}),
     data,
-  } as U extends object
-    ? { id: string; timestamp: number; data: T } & U
-    : { id: string; timestamp: number; data: T };
+  } as any;
 
   const serializedData = JSON.stringify(payload);
-
+  const signatureBase = `${payload.timestamp}.${serializedData}`;
   const signature = sign({
-    data: serializedData,
+    data: signatureBase,
     secret,
     algorithm: "sha256",
   });
 
-  return { payload, signature, raw: serializedData };
+  return {
+    payload,
+    signature: `v1.${signature}`,
+    raw: serializedData,
+  };
 }
 
 export function verifyWebhook({
@@ -48,14 +50,20 @@ export function verifyWebhook({
   secret,
   signature,
 }: {
-  payload: object;
+  payload: object & { timestamp: number };
   secret: string;
   signature: string;
 }) {
+  if (!signature.startsWith("v1.")) {
+    return false;
+  }
+  const actualSignature = signature.slice(3);
+  const signatureBase = `${payload.timestamp}.${JSON.stringify(payload)}`;
+
   return verify({
-    data: JSON.stringify(payload),
+    data: signatureBase,
     secret,
     algorithm: "sha256",
-    signature,
+    signature: actualSignature,
   });
 }

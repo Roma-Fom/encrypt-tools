@@ -8,7 +8,7 @@ import { EncryptError } from "./encrypt-error";
 
 export function hash(
   input: string,
-  algorithm: "sha256" | "sha512" = "sha256",
+  algorithm: "sha256" | "sha512" = "sha256"
 ): string {
   try {
     const hash = createHash(algorithm);
@@ -22,7 +22,7 @@ export function hash(
 export function encrypt({
   plaintext,
   secretKey,
-  iv = randomBytes(16),
+  iv = randomBytes(12),
 }: {
   plaintext: string;
   secretKey: string;
@@ -30,13 +30,14 @@ export function encrypt({
 }): { ciphertext: string; iv: string } {
   try {
     const cipher = createCipheriv(
-      "aes-256-cbc",
+      "aes-256-gcm",
       Buffer.from(secretKey, "hex"),
-      iv,
+      iv
     );
     const encrypted = Buffer.concat([
       cipher.update(plaintext, "utf8"),
       cipher.final(),
+      cipher.getAuthTag(),
     ]);
     return {
       ciphertext: encrypted.toString("hex"),
@@ -57,16 +58,21 @@ export function decrypt({
   iv: string;
 }): string {
   try {
+    const buf = Buffer.from(ciphertext, "hex");
     const decipher = createDecipheriv(
-      "aes-256-cbc",
+      "aes-256-gcm",
       Buffer.from(secretKey, "hex"),
-      Buffer.from(iv, "hex"),
+      Buffer.from(iv, "hex")
     );
-    const decrypted = Buffer.concat([
-      decipher.update(Buffer.from(ciphertext, "hex")),
+
+    const authTag = buf.subarray(buf.length - 16);
+    const encryptedData = buf.subarray(0, buf.length - 16);
+
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([
+      decipher.update(encryptedData),
       decipher.final(),
-    ]);
-    return decrypted.toString("utf8");
+    ]).toString("utf8");
   } catch (e: any) {
     throw new EncryptError(e.message, "Decryption failed", "DECRYPT_ERROR");
   }
