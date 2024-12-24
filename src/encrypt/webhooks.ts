@@ -1,22 +1,22 @@
 import { sign, verify } from "./sign";
 import { EncryptError } from "./encrypt-error";
-import { generateSecretKey, id } from "./generators";
+import { generateSecretKey } from "./generators";
+
+export type EventData = {
+  id: string;
+  type: string;
+  timestamp: number;
+  data: object;
+};
 
 export function createV1SignatureBase(
-  id: string,
   timestamp: number,
   payload: string,
-): `${string}.${number}.${string}` {
-  return `${id}.${timestamp}.${payload}`;
+): `${number}.${string}` {
+  return `${timestamp}.${payload}`;
 }
 
-export function signWebhook(
-  secret: string,
-  params: {
-    msgId?: string;
-    payload: object;
-  },
-) {
+export function signWebhook(secret: string, event: EventData) {
   if (!secret)
     throw new EncryptError(
       "Secret is required",
@@ -31,35 +31,28 @@ export function signWebhook(
       "INVALID_SECRET",
     );
   }
-  const msgId = params.msgId ?? id("msg", 27);
-  const timestamp = Date.now();
-  const serializedData = JSON.stringify(params.payload);
+
+  const signTimestamp = Date.now();
+  const serializedData = JSON.stringify(event);
+
   const signature = sign({
-    data: createV1SignatureBase(msgId, timestamp, serializedData),
+    data: createV1SignatureBase(signTimestamp, serializedData),
     secret: secretString,
     algorithm: "sha256",
   });
   return {
-    msgId,
-    timestamp,
+    timestamp: signTimestamp,
     signature: `v1,${signature}`,
+    event: event,
     raw: serializedData,
   };
 }
 
 export function verifyWebhook(
-  payload: object,
-  {
-    msgId,
-    timestamp,
-    secret,
-    signature,
-  }: {
-    msgId: string;
-    timestamp: number;
-    secret: string;
-    signature: string;
-  },
+  event: EventData,
+  timestamp: number,
+  signature: string,
+  secret: string,
 ) {
   if (!signature.startsWith("v1,") || !secret) {
     return false;
@@ -68,7 +61,7 @@ export function verifyWebhook(
   const actualSignature = signature.slice(3);
 
   return verify({
-    data: createV1SignatureBase(msgId, timestamp, JSON.stringify(payload)),
+    data: createV1SignatureBase(timestamp, JSON.stringify(event)),
     secret: secretString,
     algorithm: "sha256",
     signature: actualSignature,

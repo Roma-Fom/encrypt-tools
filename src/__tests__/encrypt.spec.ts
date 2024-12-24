@@ -36,7 +36,7 @@ describe("Crypto Library Tests", () => {
     it("should throw an EncryptError for invalid decryption", () => {
       const { ciphertext } = encrypt({ plaintext, secretKey });
       expect(() =>
-        decrypt({ ciphertext, secretKey, iv: "invalid_iv" })
+        decrypt({ ciphertext, secretKey, iv: "invalid_iv" }),
       ).toThrow(EncryptError);
     });
   });
@@ -58,7 +58,7 @@ describe("Crypto Library Tests", () => {
         encrypt({
           plaintext: JSON.stringify({ name: "John" }),
           secretKey: "123",
-        })
+        }),
       ).toThrow(EncryptError);
     });
   });
@@ -128,7 +128,7 @@ describe("Encryption Tests", () => {
           ciphertext,
           secretKey: "invalid_key",
           iv: "invalid_iv",
-        })
+        }),
       ).toThrow(EncryptError);
     });
   });

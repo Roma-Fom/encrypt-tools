@@ -7,7 +7,7 @@ export function generateSecretKey(length: 16 | 32 = 32): string {
     throw new EncryptError(
       "Invalid key length",
       "Key length must be 16 or 32",
-      "INVALID_KEY_LENGTH"
+      "INVALID_KEY_LENGTH",
     );
   }
   return randomBytes(length).toString("hex");
@@ -42,7 +42,7 @@ export function generateRSAKeyPair(): {
     throw new EncryptError(
       e.message,
       "Key pair generation failed",
-      "KEYPAIR_ERROR"
+      "KEYPAIR_ERROR",
     );
   }
 }

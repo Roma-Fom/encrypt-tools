@@ -8,7 +8,7 @@ import { EncryptError } from "./encrypt-error";
 
 export function hash(
   input: string,
-  algorithm: "sha256" | "sha512" = "sha256"
+  algorithm: "sha256" | "sha512" = "sha256",
 ): string {
   try {
     const hash = createHash(algorithm);
@@ -32,7 +32,7 @@ export function encrypt({
     const cipher = createCipheriv(
       "aes-256-gcm",
       Buffer.from(secretKey, "hex"),
-      iv
+      iv,
     );
     const encrypted = Buffer.concat([
       cipher.update(plaintext, "utf8"),
@@ -44,6 +44,7 @@ export function encrypt({
       iv: iv.toString("hex"),
     };
   } catch (e: any) {
+    console.log(e);
     throw new EncryptError(e.message, "Encryption failed", "ENCRYPT_ERROR");
   }
 }
@@ -62,7 +63,7 @@ export function decrypt({
     const decipher = createDecipheriv(
       "aes-256-gcm",
       Buffer.from(secretKey, "hex"),
-      Buffer.from(iv, "hex")
+      Buffer.from(iv, "hex"),
     );
 
     const authTag = buf.subarray(buf.length - 16);
