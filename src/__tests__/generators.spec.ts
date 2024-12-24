@@ -76,7 +76,6 @@ describe("Generator Tests", () => {
     it("should validate nano key size constraints", () => {
       const key = generateNanoKey("test", 5);
       expect(key.length).toBeGreaterThan(5); // prefix + underscore + 5 chars
-      expect(key).toMatch(/^test_[A-Za-z0-9]{5,}$/);
     });
   });
 

@@ -1,69 +1,80 @@
-import { randomUUID } from "crypto";
 import { sign, verify } from "./sign";
 import { EncryptError } from "./encrypt-error";
+import { generateSecretKey, id } from "./generators";
 
-export function signWebhook<
-  T extends string | object,
-  U extends object | undefined,
->(
-  data: T,
-  options: { id?: string; secret: string; extraParams?: U }
-): {
-  payload: U extends object
-    ? { id: string; timestamp: number; data: T } & U
-    : { id: string; timestamp: number; data: T };
-  signature: string;
-  raw: string;
-} {
-  const { id, secret, extraParams } = options;
+export function createV1SignatureBase(
+  id: string,
+  timestamp: number,
+  payload: string,
+): `${string}.${number}.${string}` {
+  return `${id}.${timestamp}.${payload}`;
+}
+
+export function signWebhook(
+  secret: string,
+  params: {
+    msgId?: string;
+    payload: object;
+  },
+) {
   if (!secret)
     throw new EncryptError(
       "Secret is required",
       "Invalid secret",
-      "INVALID_SECRET"
+      "INVALID_SECRET",
     );
-
-  const payload = {
-    id: id || randomUUID(),
-    timestamp: Date.now(),
-    ...(extraParams || {}),
-    data,
-  } as any;
-
-  const serializedData = JSON.stringify(payload);
-  const signatureBase = `${payload.timestamp}.${serializedData}`;
+  const secretString = secret.split("_")[1];
+  if (!secretString) {
+    throw new EncryptError(
+      "Invalid secret",
+      "Invalid secret",
+      "INVALID_SECRET",
+    );
+  }
+  const msgId = params.msgId ?? id("msg", 27);
+  const timestamp = Date.now();
+  const serializedData = JSON.stringify(params.payload);
   const signature = sign({
-    data: signatureBase,
-    secret,
+    data: createV1SignatureBase(msgId, timestamp, serializedData),
+    secret: secretString,
     algorithm: "sha256",
   });
-
   return {
-    payload,
-    signature: `v1.${signature}`,
+    msgId,
+    timestamp,
+    signature: `v1,${signature}`,
     raw: serializedData,
   };
 }
 
-export function verifyWebhook({
-  payload,
-  secret,
-  signature,
-}: {
-  payload: object & { timestamp: number };
-  secret: string;
-  signature: string;
-}) {
-  if (!signature.startsWith("v1.")) {
+export function verifyWebhook(
+  payload: object,
+  {
+    msgId,
+    timestamp,
+    secret,
+    signature,
+  }: {
+    msgId: string;
+    timestamp: number;
+    secret: string;
+    signature: string;
+  },
+) {
+  if (!signature.startsWith("v1,") || !secret) {
     return false;
   }
+  const secretString = secret.split("_")[1];
   const actualSignature = signature.slice(3);
-  const signatureBase = `${payload.timestamp}.${JSON.stringify(payload)}`;
 
   return verify({
-    data: signatureBase,
-    secret,
+    data: createV1SignatureBase(msgId, timestamp, JSON.stringify(payload)),
+    secret: secretString,
     algorithm: "sha256",
     signature: actualSignature,
   });
+}
+
+export function generateWebhookSecret() {
+  return `whsec_${generateSecretKey(16)}`;
 }

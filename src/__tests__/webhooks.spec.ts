@@ -1,7 +1,12 @@
-import { generateSecretKey, signWebhook, verifyWebhook } from "../encrypt";
+import {
+  EncryptError,
+  generateWebhookSecret,
+  signWebhook,
+  verifyWebhook,
+} from "../encrypt";
 
 describe("Webhooks Tests", () => {
-  const secret = generateSecretKey();
+  let secret = generateWebhookSecret();
   const testData = {
     event: "user.created",
     userId: "123",
@@ -11,119 +16,107 @@ describe("Webhooks Tests", () => {
     },
   };
 
-  describe("Webhook Signing", () => {
-    it("should generate valid webhook signature with basic payload", () => {
-      const result = signWebhook(testData, { secret });
+  describe("Generate webhook secret", () => {
+    it("should generate a valid secret key", () => {
+      secret = generateWebhookSecret();
+      console.log(secret);
+      expect(secret).toMatch(/^whsec_[a-zA-Z0-9]{32}$/);
+    });
+  });
 
-      expect(result).toHaveProperty("payload");
+  describe("Sign Webhooks", () => {
+    secret = generateWebhookSecret();
+    const payload = {
+      id: "evt_1233223523525",
+      type: "test.paid",
+      data: {
+        amount: 1000,
+        currency: "usd",
+      },
+    };
+
+    it("should generate a valid signature with provided payload", () => {
+      const result = signWebhook(secret, { payload });
+      console.log(result);
+      expect(result).toHaveProperty("msgId");
+      expect(result).toHaveProperty("timestamp");
       expect(result).toHaveProperty("signature");
       expect(result).toHaveProperty("raw");
-      expect(result.payload).toHaveProperty("id");
-      expect(result.payload).toHaveProperty("timestamp");
-      expect(result.payload).toHaveProperty("data", testData);
+      expect(result.raw).toBe(JSON.stringify(payload));
     });
 
-    it("should include extra parameters in payload", () => {
-      const extraParams = { type: "USER_EVENT", version: "1.0" };
-      const result = signWebhook(testData, {
-        secret,
-        extraParams,
-      });
-
-      expect(result.payload).toHaveProperty("type", "USER_EVENT");
-      expect(result.payload).toHaveProperty("version", "1.0");
+    it("should throw an EncryptError if secret is missing", () => {
+      expect(() => signWebhook("", { payload })).toThrow(EncryptError);
     });
 
-    it("should use custom ID if provided", () => {
-      const customId = "custom_123";
-      const result = signWebhook(testData, {
-        secret,
-        id: customId,
-      });
-
-      expect(result.payload.id).toBe(customId);
+    it("should use provided msgId if available", () => {
+      const msgId = "custom_msg_id";
+      const result = signWebhook(secret, { msgId, payload });
+      expect(result.msgId).toBe(msgId);
     });
 
-    it("should throw error if secret is missing", () => {
-      expect(() =>
-        signWebhook(testData, {
-          secret: "",
-        })
-      ).toThrow("Secret is required");
+    it("should generate a new msgId if not provided", () => {
+      const result = signWebhook(secret, { payload });
+      const msgId = result.msgId.split("msg_")[1];
+      expect(msgId.length).toEqual(27);
+    });
+
+    it("should handle complex payloads correctly", () => {
+      const complexPayload = { key: "value", nested: { key: "nestedValue" } };
+      const result = signWebhook(secret, { payload: complexPayload });
+      expect(result.raw).toBe(JSON.stringify(complexPayload));
     });
   });
 
   describe("Webhook Verification", () => {
+    secret = generateWebhookSecret();
     it("should verify valid webhook signature", () => {
-      const { payload, signature } = signWebhook(testData, { secret });
+      const { msgId, raw, signature, timestamp } = signWebhook(secret, {
+        payload: testData,
+      });
 
-      const isValid = verifyWebhook({
-        payload,
+      const isValid = verifyWebhook(JSON.parse(raw), {
+        msgId,
         secret,
         signature,
+        timestamp,
       });
 
       expect(isValid).toBe(true);
     });
 
     it("should reject tampered payload", () => {
-      const { payload, signature } = signWebhook(testData, { secret });
+      const { msgId, raw, signature, timestamp } = signWebhook(secret, {
+        payload: testData,
+      });
       const tamperedPayload = {
-        ...payload,
+        ...JSON.parse(raw),
         data: { ...testData, userId: "456" },
       };
 
-      const isValid = verifyWebhook({
-        payload: tamperedPayload,
+      const isValid = verifyWebhook(tamperedPayload, {
+        msgId,
         secret,
         signature,
+        timestamp,
       });
 
       expect(isValid).toBe(false);
     });
 
     it("should reject invalid signature", () => {
-      const { payload } = signWebhook(testData, { secret });
+      const { msgId, raw, timestamp } = signWebhook(secret, {
+        payload: testData,
+      });
 
-      const isValid = verifyWebhook({
-        payload,
+      const isValid = verifyWebhook(JSON.parse(raw), {
+        msgId,
         secret,
+        timestamp,
         signature: "invalid_signature",
       });
 
       expect(isValid).toBe(false);
-    });
-  });
-
-  describe("Input Validation", () => {
-    const secret = generateSecretKey();
-
-    it("should handle null values in payload data", () => {
-      const testData = {
-        event: "test.event",
-        value: null,
-      };
-
-      const result = signWebhook(testData, { secret });
-      expect(result.payload.data).toEqual(testData);
-    });
-
-    it("should handle undefined optional parameters", () => {
-      const result = signWebhook("test", {
-        secret,
-        id: undefined,
-        extraParams: undefined,
-      });
-
-      expect(result.payload).toHaveProperty("id");
-      expect(typeof result.payload.id).toBe("string");
-    });
-
-    it("should validate timestamp is current", () => {
-      const result = signWebhook("test", { secret });
-      const now = Date.now();
-      expect(result.payload.timestamp).toBeLessThanOrEqual(now);
-      expect(result.payload.timestamp).toBeGreaterThan(now - 1000);
     });
   });
 });
