@@ -1,8 +1,8 @@
 import {
   generateSecretKey,
-  generateNanoKey,
   generateRSAKeyPair,
   EncryptError,
+  id,
 } from "../encrypt";
 
 describe("Generator Tests", () => {
@@ -43,20 +43,20 @@ describe("Generator Tests", () => {
 
   describe("Nano Key Generation", () => {
     it("should generate key with prefix", () => {
-      const key = generateNanoKey("test", 10);
+      const key = id("test");
       expect(key).toMatch(/^test_/);
       expect(key.length).toBeGreaterThan(5);
     });
 
     it("should generate key without prefix", () => {
-      const key = generateNanoKey();
+      const key = id();
       expect(key).toBeDefined();
       expect(typeof key).toBe("string");
     });
 
     it("should generate unique keys", () => {
-      const key1 = generateNanoKey("test");
-      const key2 = generateNanoKey("test");
+      const key1 = id("test");
+      const key2 = id("test");
       expect(key1).not.toBe(key2);
     });
   });
@@ -67,14 +67,14 @@ describe("Generator Tests", () => {
       expect(() => generateSecretKey(33 as any)).toThrow(EncryptError);
     });
 
-    it("should handle empty prefix in generateNanoKey", () => {
-      const key = generateNanoKey("");
+    it("should handle empty prefix in id", () => {
+      const key = id("");
       expect(key).toBeDefined();
       expect(key.length).toBeGreaterThan(0);
     });
 
     it("should validate nano key size constraints", () => {
-      const key = generateNanoKey("test", 5);
+      const key = id("test", 5);
       expect(key.length).toBeGreaterThan(5); // prefix + underscore + 5 chars
     });
   });

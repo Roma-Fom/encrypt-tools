@@ -9,7 +9,6 @@ describe("Index Exports", () => {
     expect(encryptTools.verify).toBeDefined();
     expect(encryptTools.generateSecretKey).toBeDefined();
     expect(encryptTools.generateRSAKeyPair).toBeDefined();
-    expect(encryptTools.generateNanoKey).toBeDefined();
     expect(encryptTools.signWebhook).toBeDefined();
     expect(encryptTools.verifyWebhook).toBeDefined();
     expect(encryptTools.EncryptError).toBeDefined();

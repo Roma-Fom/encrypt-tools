@@ -1,6 +1,6 @@
 import { sign, verify } from "./sign";
 import { EncryptError } from "./encrypt-error";
-import { generateSecretKey } from "./generators";
+import { id } from "./generators";
 
 export type EventData = {
   id: string;
@@ -11,7 +11,7 @@ export type EventData = {
 
 export function createV1SignatureBase(
   timestamp: number,
-  payload: string,
+  payload: string
 ): `${number}.${string}` {
   return `${timestamp}.${payload}`;
 }
@@ -21,14 +21,14 @@ export function signWebhook(secret: string, event: EventData) {
     throw new EncryptError(
       "Secret is required",
       "Invalid secret",
-      "INVALID_SECRET",
+      "INVALID_SECRET"
     );
   const secretString = secret.split("_")[1];
   if (!secretString) {
     throw new EncryptError(
       "Invalid secret",
       "Invalid secret",
-      "INVALID_SECRET",
+      "INVALID_SECRET"
     );
   }
 
@@ -52,7 +52,7 @@ export function verifyWebhook(
   event: EventData,
   timestamp: number,
   signature: string,
-  secret: string,
+  secret: string
 ) {
   if (!signature.startsWith("v1,") || !secret) {
     return false;
@@ -69,5 +69,5 @@ export function verifyWebhook(
 }
 
 export function generateWebhookSecret() {
-  return `whsec_${generateSecretKey(16)}`;
+  return id("whsec");
 }
