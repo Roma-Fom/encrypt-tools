@@ -3,7 +3,7 @@ import { customAlphabet } from "nanoid";
 import { EncryptError } from "./encrypt-error";
 export const nanoid = customAlphabet(
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-  21
+  21,
 );
 
 export function generateSecretKey(length: 16 | 32 = 32): string {
@@ -11,15 +11,11 @@ export function generateSecretKey(length: 16 | 32 = 32): string {
     throw new EncryptError(
       "Invalid key length",
       "Key length must be 16 or 32",
-      "INVALID_KEY_LENGTH"
+      "INVALID_KEY_LENGTH",
     );
   }
   return randomBytes(length).toString("hex");
 }
-
-// export function generateNanoKey(prefix?: string, size?: number): string {
-//   return id(prefix, size);
-// }
 
 export function id(prefix?: string, size: number = 21): string {
   return prefix ? `${prefix}_${nanoid(size)}` : nanoid();
@@ -46,7 +42,7 @@ export function generateRSAKeyPair(): {
     throw new EncryptError(
       e.message,
       "Key pair generation failed",
-      "KEYPAIR_ERROR"
+      "KEYPAIR_ERROR",
     );
   }
 }
